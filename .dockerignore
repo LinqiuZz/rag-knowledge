@@ -1,0 +1,26 @@
+# 排除大文件，减小镜像体积
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.github/
+.locks/
+.pytest_cache/
+
+# 排除原始数据（运行时通过卷挂载）
+data/raw/
+data/db/
+
+# 排除大文件
+*.png
+*.jpg
+*.pdf
+*.docx
+*.xlsx
+
+# 排除开发文件
+tests/
+eval/
+*.bat
+*.ps1

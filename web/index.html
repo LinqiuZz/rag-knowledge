@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>知识库助手</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --text: #1f2937;
+      --text2: #6b7280;
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    header .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    header .logo span { font-size: 22px; }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      display: inline-block;
+    }
+    .status-dot.ok { background: var(--accent); }
+    .status-dot.err { background: var(--danger); }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text2);
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--primary-light); color: var(--primary); }
+    .nav-item.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+      border-left-color: var(--primary);
+    }
+    .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .page { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .page.active { display: flex; }
+
+    /* ── Chat Page ── */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.7;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.bot .sources {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .msg.bot .sources span {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 2px 4px 2px 0;
+      font-size: 11px;
+    }
+    .msg.typing::after {
+      content: "";
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--text2);
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .chat-input {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .chat-input input:focus { border-color: var(--primary); }
+
+    .welcome {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text2);
+      gap: 12px;
+    }
+    .welcome .icon { font-size: 48px; }
+    .welcome h2 { font-size: 20px; color: var(--text); }
+    .welcome p { font-size: 14px; }
+    .quick-asks {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .quick-asks button {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .quick-asks button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* ── Docs Page ── */
+    .docs-page { padding: 24px; overflow-y: auto; }
+    .docs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .docs-header h2 { font-size: 20px; }
+
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .upload-area .icon { font-size: 36px; margin-bottom: 8px; }
+    .upload-area p { color: var(--text2); font-size: 14px; }
+    .upload-area input { display: none; }
+
+    .url-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .url-input-row input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+    .url-input-row input:focus { border-color: var(--primary); }
+
+    .doc-list { display: flex; flex-direction: column; gap: 8px; }
+    .doc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: shadow 0.15s;
+    }
+    .doc-card:hover { box-shadow: var(--shadow); }
+    .doc-info h4 { font-size: 14px; margin-bottom: 4px; }
+    .doc-info p { font-size: 12px; color: var(--text2); }
+    .doc-actions { display: flex; gap: 8px; }
+
+    /* ── Status Page ── */
+    .status-page { padding: 24px; overflow-y: auto; }
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-card .label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+    .stat-card .value { font-size: 22px; font-weight: 700; }
+    .stat-card .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #fff;
+      animation: slideIn 0.3s ease;
+      max-width: 360px;
+    }
+    .toast.success { background: var(--accent); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .nav-item span:not(.icon) { display: none; }
+      .nav-item { justify-content: center; padding: 10px 0; }
+      .msg { max-width: 95%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span>📚</span>
+      <span>知识库助手</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">检测中...</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="nav-item active" data-page="chat">
+        <span class="icon">💬</span>
+        <span>智能问答</span>
+      </div>
+      <div class="nav-item" data-page="search">
+        <span class="icon">🔍</span>
+        <span>语义搜索</span>
+      </div>
+      <div class="nav-item" data-page="docs">
+        <span class="icon">📄</span>
+        <span>文档管理</span>
+      </div>
+      <div class="nav-item" data-page="status">
+        <span class="icon">⚙️</span>
+        <span>系统状态</span>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main">
+
+      <!-- Chat Page -->
+      <div class="page active" id="page-chat">
+        <div class="chat-messages" id="chatMessages">
+          <div class="welcome">
+            <div class="icon">🤖</div>
+            <h2>你好，我是知识库助手</h2>
+            <p>基于你的知识库文档，回答任何问题</p>
+            <div class="quick-asks">
+              <button onclick="quickAsk('RAG系统的基本原理是什么？')">RAG基本原理</button>
+              <button onclick="quickAsk('如何优化检索效果？')">优化检索</button>
+              <button onclick="quickAsk('介绍一下混合检索')">混合检索</button>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="输入你的问题..." onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="btn btn-primary" onclick="sendChat()">发送</button>
+        </div>
+      </div>
+
+      <!-- Search Page -->
+      <div class="page" id="page-search">
+        <div style="padding:24px;overflow-y:auto;flex:1">
+          <h2 style="margin-bottom:16px">语义搜索</h2>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <input type="text" id="searchInput" placeholder="输入搜索内容..." style="flex:1;padding:10px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')doSearch()" />
+            <button class="btn btn-primary" onclick="doSearch()">搜索</button>
+          </div>
+          <div id="searchResults" class="doc-list"></div>
+        </div>
+      </div>
+
+      <!-- Docs Page -->
+      <div class="page" id="page-docs">
+        <div class="docs-page">
+          <div class="docs-header">
+            <h2>文档管理</h2>
+            <button class="btn btn-ghost" onclick="loadDocs()">刷新</button>
+          </div>
+
+          <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div class="icon">📁</div>
+            <p>点击或拖拽 PDF 文件到此处上传</p>
+            <input type="file" id="fileInput" accept=".pdf" onchange="uploadFile(this.files[0])" />
+          </div>
+
+          <div class="url-input-row">
+            <input type="text" id="urlInput" placeholder="输入网页 URL 导入..." />
+            <button class="btn btn-primary" onclick="importUrl()">导入</button>
+          </div>
+
+          <div class="doc-list" id="docList">
+            <p style="color:var(--text2);text-align:center;padding:40px">加载中...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Page -->
+      <div class="page" id="page-status">
+        <div class="status-page">
+          <h2>系统状态</h2>
+          <div class="status-grid" id="statusGrid">
+            <p style="color:var(--text2)">加载中...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-container" id="toasts"></div>
+
+  <script>
+    // ── Config ──
+    const API_BASE = window.location.origin + '/api';
+    // If serving HTML separately from API, change to:
+    // const API_BASE = 'http://your-server:8000/api';
+
+    // Detect API version (standalone vs modular)
+    let API_VERSION = 'standalone'; // '/api/documents/upload', '/api/status'
+    async function detectApiVersion() {
+      try {
+        const r = await fetch(API_BASE + '/info');
+        if (r.ok) API_VERSION = 'modular'; // '/api/ingest/pdf', '/api/info'
+      } catch {}
+    }
+    detectApiVersion();
+
+    // ── Navigation ──
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        item.classList.add('active');
+        document.getElementById('page-' + item.dataset.page).classList.add('active');
+
+        if (item.dataset.page === 'docs') loadDocs();
+        if (item.dataset.page === 'status') loadStatus();
+      });
+    });
+
+    // ── Toast ──
+    function toast(msg, type = 'info') {
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.textContent = msg;
+      document.getElementById('toasts').appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ── Health Check ──
+    async function checkHealth() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      try {
+        const r = await fetch(API_BASE + '/health');
+        if (r.ok) {
+          dot.className = 'status-dot ok';
+          text.textContent = '服务正常';
+        } else throw new Error();
+      } catch {
+        dot.className = 'status-dot err';
+        text.textContent = '服务不可用';
+      }
+    }
+    checkHealth();
+    setInterval(checkHealth, 30000);
+
+    // ── Chat ──
+    const chatHistory = [];
+
+    function addMsg(content, role, sources = []) {
+      const container = document.getElementById('chatMessages');
+      // Remove welcome if exists
+      const welcome = container.querySelector('.welcome');
+      if (welcome) welcome.remove();
+
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+
+      if (role === 'bot' && sources.length) {
+        div.innerHTML = content + '<div class="sources">来源：' +
+          sources.map(s => '<span>' + escapeHtml(s.title || s.source || '') + '</span>').join('') +
+          '</div>';
+      } else {
+        div.textContent = content;
+      }
+
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function quickAsk(q) {
+      document.getElementById('chatInput').value = q;
+      sendChat();
+    }
+
+    async function sendChat() {
+      const input = document.getElementById('chatInput');
+      const q = input.value.trim();
+      if (!q) return;
+      input.value = '';
+
+      addMsg(q, 'user');
+      chatHistory.push({ role: 'user', content: q });
+
+      const typingEl = addMsg('思考中...', 'bot');
+      typingEl.classList.add('typing');
+
+      try {
+        const r = await fetch(API_BASE + '/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, top_k: 5 }),
+        });
+        const data = await r.json();
+        typingEl.remove();
+
+        if (r.ok) {
+          addMsg(data.answer, 'bot', data.sources || []);
+          chatHistory.push({ role: 'assistant', content: data.answer });
+        } else {
+          addMsg('错误：' + (data.detail || '请求失败'), 'bot');
+        }
+      } catch (e) {
+        typingEl.remove();
+        addMsg('网络错误，请检查服务是否运行', 'bot');
+      }
+    }
+
+    // ── Search ──
+    async function doSearch() {
+      const input = document.getElementById('searchInput');
+      const q = input.value.trim();
+      if (!q) return;
+
+      const container = document.getElementById('searchResults');
+      container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px">搜索中...</p>';
+
+      try {
+        const r = await fetch(API_BASE + '/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, top_k: 10 }),
+        });
+        const data = await r.json();
+
+        if (!r.ok) {
+          container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">' + (data.detail || '搜索失败') + '</p>';
+          return;
+        }
+
+        // Modular: {results: [...], total: N}, Standalone: [...]
+        const items = Array.isArray(data) ? data : (data.results || []);
+
+        if (!items.length) {
+          container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px">未找到相关结果</p>';
+          return;
+        }
+
+        container.innerHTML = items.map(r => `
+          <div class="doc-card">
+            <div class="doc-info">
+              <h4>${escapeHtml(r.title || '未知')}</h4>
+              <p style="margin-top:6px;font-size:13px;color:var(--text);line-height:1.6">${escapeHtml(r.text.substring(0, 200))}...</p>
+              <p style="margin-top:6px">来源: ${escapeHtml(r.source)} · 相关度: ${(r.score * 100).toFixed(1)}%</p>
+            </div>
+          </div>
+        `).join('');
+      } catch {
+        container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">网络错误</p>';
+      }
+    }
+
+    // ── Documents ──
+    async function loadDocs() {
+      const container = document.getElementById('docList');
+      try {
+        const r = await fetch(API_BASE + '/documents');
+        const data = await r.json();
+
+        if (!data.length) {
+          container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:40px">暂无文档，请上传或导入</p>';
+          return;
+        }
+
+        container.innerHTML = data.map(d => {
+          const source = d.source || d.title || '';
+          return `
+          <div class="doc-card">
+            <div class="doc-info">
+              <h4>${escapeHtml(d.title || '未知')}</h4>
+              <p>${source ? escapeHtml(source) + ' · ' : ''}${d.chunk_count} 块 · ${d.char_count || 0} 字 · ${d.doc_type}</p>
+              ${d.created_at ? '<p style="font-size:11px;color:var(--text2)">' + d.created_at + '</p>' : ''}
+            </div>
+            <div class="doc-actions">
+              <button class="btn btn-danger btn-sm" onclick="deleteDoc('${escapeHtml(source)}')">删除</button>
+            </div>
+          </div>`;
+        }).join('');
+      } catch {
+        container.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">加载失败</p>';
+      }
+    }
+
+    async function uploadFile(file) {
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('file', file);
+      toast('上传中...', 'info');
+
+      // Modular: /api/ingest/pdf, Standalone: /api/documents/upload
+      const endpoint = API_VERSION === 'modular' ? '/ingest/pdf' : '/documents/upload';
+
+      try {
+        const r = await fetch(API_BASE + endpoint, { method: 'POST', body: fd });
+        const data = await r.json();
+        if (r.ok) {
+          toast(data.message || data.title ? `导入成功: ${data.title}` : '上传成功', 'success');
+          loadDocs();
+        } else {
+          toast(data.detail || '上传失败', 'error');
+        }
+      } catch {
+        toast('网络错误', 'error');
+      }
+    }
+
+    async function importUrl() {
+      const input = document.getElementById('urlInput');
+      const url = input.value.trim();
+      if (!url) return;
+
+      if (API_VERSION === 'modular') {
+        toast('当前 API 版本暂不支持网页导入', 'error');
+        return;
+      }
+
+      toast('导入中...', 'info');
+      try {
+        const r = await fetch(API_BASE + '/documents/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        const data = await r.json();
+        if (r.ok) {
+          toast(data.message || '导入成功', 'success');
+          input.value = '';
+          loadDocs();
+        } else {
+          toast(data.detail || '导入失败', 'error');
+        }
+      } catch {
+        toast('网络错误', 'error');
+      }
+    }
+
+    async function deleteDoc(source) {
+      if (!confirm('确定删除该文档？')) return;
+      try {
+        // Modular: DELETE /api/documents/{source}, Standalone: DELETE /api/documents?source=...
+        const url = API_VERSION === 'modular'
+          ? API_BASE + '/documents/' + encodeURIComponent(source)
+          : API_BASE + '/documents?source=' + encodeURIComponent(source);
+        const r = await fetch(url, { method: 'DELETE' });
+        const data = await r.json();
+        if (r.ok) {
+          toast('已删除', 'success');
+          loadDocs();
+        } else {
+          toast(data.detail || '删除失败', 'error');
+        }
+      } catch {
+        toast('网络错误', 'error');
+      }
+    }
+
+    // ── Drag & Drop ──
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.pdf')) uploadFile(file);
+      else toast('仅支持 PDF 文件', 'error');
+    });
+
+    // ── Status ──
+    async function loadStatus() {
+      const grid = document.getElementById('statusGrid');
+      // Modular: /api/info, Standalone: /api/status
+      const endpoint = API_VERSION === 'modular' ? '/info' : '/status';
+      try {
+        const r = await fetch(API_BASE + endpoint);
+        const d = await r.json();
+        grid.innerHTML = `
+          <div class="stat-card">
+            <div class="label">LLM 后端</div>
+            <div class="value">${d.llm_backend || '-'}</div>
+            <div class="sub">模型: ${d.claude_model || d.ollama_model || '-'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">嵌入模型</div>
+            <div class="value" style="font-size:16px">${d.embedding_model || '-'}</div>
+            <div class="sub">设备: ${d.embedding_device || '-'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">文档数量</div>
+            <div class="value">${d.document_count ?? '-'}</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">向量数量</div>
+            <div class="value">${d.vector_count ?? d.total_chunks ?? '-'}</div>
+          </div>
+        `;
+      } catch {
+        grid.innerHTML = '<p style="color:var(--danger)">加载失败，请检查服务是否运行</p>';
+      }
+    }
+  </script>
+</body>
+</html>

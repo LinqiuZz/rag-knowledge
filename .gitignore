@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment / Secrets — NEVER commit these
+.env
+config.yaml
+
+# Runtime data
+data/db/
+data/raw/
+data/
+
+# Archive (non-essential files)
+_archive/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# PV Lock files
+.locks/
+
+# Test output
+test_output.json
+benchmark_results.json
+
+# Claude Code config
+.claude/

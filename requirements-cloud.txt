@@ -1,0 +1,45 @@
+# 云服务部署依赖（CPU版本，体积更小）
+# 用法: pip install -r requirements-cloud.txt
+
+# Core
+chromadb>=0.5.0
+pyyaml>=6.0
+click>=8.0
+rich>=13.0
+
+# PDF
+pymupdf>=1.24.0
+
+# Web
+trafilatura>=1.8.0
+
+# LLM
+anthropic>=0.40.0
+ollama>=0.3.0
+
+# PyTorch CPU 版本（比 CUDA 版本小很多）
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.4.0
+torchvision>=0.19.0
+
+# Embeddings
+sentence-transformers>=3.0.0
+
+# MySQL
+mysql-connector-python>=9.0.0
+
+# Env
+python-dotenv>=1.0.0
+
+# Web API
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+
+# 多格式文档支持
+python-docx>=1.1.0
+openpyxl>=3.1.2
+beautifulsoup4>=4.12.0
+
+# Redis 缓存
+redis>=5.0.0

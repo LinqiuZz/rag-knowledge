@@ -1,0 +1,125 @@
+# 机器学习项目配置模板参考
+# ================================
+# 本文件展示了 ML 项目中常用的 YAML 配置结构
+
+# ── 数据配置 ──────────────────
+data:
+  train_path: ./data/train.csv
+  test_path: ./data/test.csv
+  validation_split: 0.2
+  target_column: label
+  feature_columns: auto  # auto = 除目标列外所有列
+  preprocessing:
+    missing_values: median  # mean, median, mode, drop, constant
+    scaling: standard  # standard, minmax, robust, none
+    encoding: onehot  # onehot, label, target, ordinal
+    outlier_removal:
+      enabled: true
+      method: iqr  # iqr, zscore
+      threshold: 3.0
+
+# ── 模型配置 ──────────────────
+models:
+  random_forest:
+    n_estimators: 100
+    max_depth: 10
+    min_samples_split: 5
+    min_samples_leaf: 2
+    criterion: gini  # gini, entropy
+    class_weight: balanced
+  
+  xgboost:
+    n_estimators: 200
+    max_depth: 6
+    learning_rate: 0.1
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1  # L1 正则化
+    reg_lambda: 1.0  # L2 正则化
+    objective: multi:softmax
+    eval_metric: mlogloss
+  
+  lightgbm:
+    n_estimators: 200
+    max_depth: -1
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    min_child_samples: 20
+  
+  neural_network:
+    architecture:
+      type: mlp  # mlp, cnn, rnn, transformer
+      layers:
+        - type: dense
+          units: 128
+          activation: relu
+          dropout: 0.3
+        - type: dense
+          units: 64
+          activation: relu
+          dropout: 0.2
+        - type: dense
+          units: null  # 自动匹配类别数
+          activation: softmax
+    training:
+      optimizer: adam
+      learning_rate: 0.001
+      batch_size: 32
+      epochs: 100
+      early_stopping:
+        enabled: true
+        patience: 10
+        monitor: val_loss
+      scheduler:
+        type: cosine  # cosine, step, exponential
+        T_max: 100
+        eta_min: 1e-6
+
+# ── 超参数搜索 ──────────────────
+hyperparameter_tuning:
+  method: optuna  # grid, random, optuna, bayesian
+  n_trials: 100
+  direction: maximize  # maximize, minimize
+  metric: f1_macro
+  timeout: 3600  # 秒
+  search_spaces:
+    random_forest:
+      n_estimators: [50, 500]
+      max_depth: [3, 20]
+      min_samples_split: [2, 20]
+    xgboost:
+      learning_rate: [0.01, 0.3]
+      max_depth: [3, 10]
+      n_estimators: [100, 500]
+
+# ── 评估配置 ──────────────────
+evaluation:
+  metrics:
+    - accuracy
+    - precision_macro
+    - recall_macro
+    - f1_macro
+    - roc_auc_ovr
+  cross_validation:
+    enabled: true
+    n_folds: 5
+    stratified: true
+    shuffle: true
+  confusion_matrix:
+    plot: true
+    save_path: ./reports/confusion_matrix.png
+  feature_importance:
+    plot: true
+    top_n: 20
+
+# ── 输出配置 ──────────────────
+output:
+  model_dir: ./models
+  report_dir: ./reports
+  log_dir: ./logs
+  experiment_name: ml_experiment_v1
+  save_best_only: true
+  model_format: joblib  # joblib, pickle, onnx, torch
