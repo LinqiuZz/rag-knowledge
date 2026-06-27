@@ -173,7 +173,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             content = await file.read()
             f.write(content)
 
-        from src.ingest.pipeline import ingest_pdf
+        from src.ingest.pipeline import ingest_document as ingest_pdf
         result = ingest_pdf(str(tmp_path), settings, vector_store, meta_store, embedder)
 
         return IngestResponse(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from .base import BaseLLM
 
 
@@ -11,6 +12,8 @@ class OllamaLLM(BaseLLM):
         self.model = settings.llm.ollama_model
         self.url = settings.llm.ollama_url
         self._client = None
+        self._available: bool | None = None
+        self._available_checked_at: float = 0
 
     @property
     def client(self):
@@ -21,11 +24,16 @@ class OllamaLLM(BaseLLM):
         return self._client
 
     def is_available(self) -> bool:
+        now = time.monotonic()
+        if self._available is not None and now - self._available_checked_at < 30:
+            return self._available
         try:
             self.client.list()
-            return True
+            self._available = True
         except Exception:
-            return False
+            self._available = False
+        self._available_checked_at = now
+        return self._available
 
     def chat(self, system: str, user: str, max_tokens: int = 2048) -> str:
         resp = self.client.chat(
