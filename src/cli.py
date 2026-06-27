@@ -168,9 +168,11 @@ def search(ctx, query, top_k, hybrid, rerank):
 @click.option("--hyde/--no-hyde", default=True, help="HyDE 语义增强（假设文档嵌入）")
 @click.option("--decompose/--no-decompose", default=True, help="任务分解（子查询拆解）")
 @click.option("--compress/--no-compress", default=True, help="上下文补全（指代消解）")
+@click.option("--few-shot/--no-few-shot", default=True, help="Few-Shot 示例引导")
+@click.option("--cot/--no-cot", default=True, help="Chain-of-Thought 分步推理")
 @click.pass_context
 def ask(ctx, question, top_k, hybrid, multi, rerank,
-        rewrite, hyde, decompose, compress):
+        rewrite, hyde, decompose, compress, few_shot, cot):
     """RAG 问答 — 基于知识库回答问题。"""
     app = _init(ctx)
 
@@ -190,6 +192,8 @@ def ask(ctx, question, top_k, hybrid, multi, rerank,
     if hyde:      strategy_info.append("HyDE")
     if decompose: strategy_info.append("任务分解")
     if compress:  strategy_info.append("上下文补全")
+    if few_shot:  strategy_info.append("Few-Shot")
+    if cot:       strategy_info.append("CoT")
     if strategy_info:
         console.print(f"[dim]策略: {' | '.join(strategy_info)}[/dim]")
 
@@ -201,6 +205,7 @@ def ask(ctx, question, top_k, hybrid, multi, rerank,
             use_rewrite=rewrite, use_hyde=hyde,
             use_decompose=decompose, use_compress=compress,
             pipeline=app.pipeline,
+            use_few_shot=few_shot, use_cot=cot,
         )
 
     console.print(Panel(result["answer"], title="回答", border_style="green"))

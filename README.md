@@ -1,4 +1,4 @@
-# RAG Knowledge Base System v2.0
+# RAG Knowledge Base System v2.1
 
 企业级检索增强生成（RAG）知识库系统，支持多格式文档导入、智能检索、LLM 问答和模板文档生成。
 

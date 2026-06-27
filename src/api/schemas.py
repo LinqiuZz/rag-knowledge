@@ -54,6 +54,9 @@ class RAGRequest(BaseModel):
     use_decompose: bool = Field(True, description="启用任务分解")
     use_compress: bool = Field(True, description="启用上下文补全")
     history: Optional[list[dict]] = Field(None, description="多轮对话历史")
+    # ── Prompt 增强 ──
+    use_few_shot: bool = Field(True, description="启用 Few-Shot 示例引导")
+    use_cot: bool = Field(True, description="启用 Chain-of-Thought 分步推理")
 
 
 class RAGSource(BaseModel):
@@ -155,7 +158,7 @@ class PermissionRequest(BaseModel):
 
 class SystemInfo(BaseModel):
     app_name: str = Field("RAG-KnowledgeBase", description="应用名称")
-    version: str = Field("2.0.0", description="版本")
+    version: str = Field("2.1.0", description="版本")
     llm_backend: str = Field(..., description="当前 LLM 后端")
     embedding_model: str = Field(..., description="嵌入模型")
     embedding_dimension: int = Field(0, description="嵌入维度")

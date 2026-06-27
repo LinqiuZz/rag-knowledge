@@ -140,6 +140,7 @@ async def ask(request: RAGRequest):
             use_rewrite=request.use_rewrite, use_hyde=request.use_hyde,
             use_decompose=request.use_decompose, use_compress=request.use_compress,
             history=request.history, pipeline=app.pipeline,
+            use_few_shot=request.use_few_shot, use_cot=request.use_cot,
         )
 
         sources = [
@@ -165,13 +166,15 @@ async def ask_enhanced(
     llm_backend: Optional[str] = None, user_id: Optional[int] = None,
     use_rewrite: bool = True, use_hyde: bool = True,
     use_decompose: bool = True, use_compress: bool = True,
+    use_few_shot: bool = True, use_cot: bool = True,
 ):
     """增强 RAG 问答（支持查询改写：HyDE / 任务分解 / 上下文补全）"""
     req = RAGRequest(question=question, top_k=top_k, llm_backend=llm_backend,
                      use_hybrid=use_hybrid, use_multi_query=use_multi_query,
                      use_rerank=use_rerank, user_id=user_id,
                      use_rewrite=use_rewrite, use_hyde=use_hyde,
-                     use_decompose=use_decompose, use_compress=use_compress)
+                     use_decompose=use_decompose, use_compress=use_compress,
+                     use_few_shot=use_few_shot, use_cot=use_cot)
     return await ask(req)
 
 
@@ -500,6 +503,8 @@ class ChatRequest(BaseModel):
     top_k: int = Field(5, ge=1, le=20)
     llm_backend: Optional[str] = None
     user_id: Optional[int] = None
+    use_few_shot: bool = Field(True, description="启用 Few-Shot 示例引导")
+    use_cot: bool = Field(True, description="启用 Chain-of-Thought 分步推理")
 
 
 class ChatResponse(BaseModel):
@@ -540,6 +545,7 @@ async def chat(request: ChatRequest):
         result = multi_turn_rag(
             request.message, session, app.settings, app.vector_store,
             app.embedder, app.llm, top_k=request.top_k,
+            use_few_shot=request.use_few_shot, use_cot=request.use_cot,
         )
 
         sources = [
@@ -591,7 +597,7 @@ async def get_info():
 
 @router.get("/health", tags=["系统"])
 async def health():
-    return {"status": "healthy", "version": "2.0.0"}
+    return {"status": "healthy", "version": "2.1.0"}
 
 
 # ═══════════════════════════════════════════════════════════════

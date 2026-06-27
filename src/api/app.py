@@ -36,7 +36,7 @@ app = FastAPI(
 - **文档生成**: 模板化 Word/PPT 自动生成
 - **审计日志**: 全操作链路追踪
 """,
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -74,7 +74,7 @@ async def serve_index():
         return FileResponse(str(index_path))
     return {
         "name": "🧠 RAG Knowledge Base — Enterprise",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "docs": "/docs",
         "status": "running",
         "services": {

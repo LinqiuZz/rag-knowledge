@@ -116,6 +116,8 @@ def multi_turn_rag(
     embedder,
     llm,
     top_k: int = 5,
+    use_few_shot: bool = True,
+    use_cot: bool = True,
 ) -> dict:
     """
     多轮 RAG 问答
@@ -160,6 +162,8 @@ def multi_turn_rag(
     ])
 
     # 4. 构建系统提示
+    from .rag import FEW_SHOT_EXAMPLES, COT_SUFFIX
+
     system_prompt = """你是一个基于用户知识库的问答助手。根据提供的参考资料和对话历史回答用户问题。
 
 规则：
@@ -169,17 +173,18 @@ def multi_turn_rag(
 - 使用中文回答
 - 回答要准确、简洁、有条理
 - 考虑对话历史，保持连贯性"""
+    if use_cot:
+        system_prompt += COT_SUFFIX
 
     # 5. 构建用户提示（包含历史）
-    user_prompt = f"""对话历史：
-{history_text}
-
-参考资料：
-{context}
-
-当前问题：{query}
-
-请基于参考资料和对话历史回答问题。"""
+    user_parts = []
+    if use_few_shot:
+        user_parts.append(FEW_SHOT_EXAMPLES.strip())
+    user_parts.append(f"对话历史：\n{history_text}\n")
+    user_parts.append(f"参考资料：\n{context}\n")
+    user_parts.append(f"当前问题：{query}\n")
+    user_parts.append("请基于参考资料和对话历史回答问题。")
+    user_prompt = "\n".join(user_parts)
 
     # 6. 生成回答
     answer = llm.chat(system_prompt, user_prompt)

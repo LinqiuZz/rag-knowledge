@@ -182,7 +182,7 @@ class IngestConfig:
 class Settings:
     # 基础
     app_name: str = "RAG-KnowledgeBase"
-    version: str = "2.0.0"
+    version: str = "2.1.0"
     debug: bool = False
 
     # 子配置
